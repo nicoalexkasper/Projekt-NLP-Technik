@@ -4,6 +4,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 import contractions                                     #contractions.fix(<String>)
 import nltk
+from gensim.models import LdaModel
+from gensim.models import LsiModel
 import gensim
 from nltk.corpus import stopwords
 
@@ -63,18 +65,37 @@ for element in reviews:
             vocabularyList.append(lemmatizer.lemmatize(word))
 
 
-vectorizer = CountVectorizer(vocabulary=vocabularyList)                         #Nutzung von erzeugtem Vokabular
+vectorizerBoW = CountVectorizer(vocabulary=vocabularyList)                         #Nutzung von erzeugtem Vokabular
 
-bowData = vectorizer.fit_transform(reviews)                                     
-bowData = pd.DataFrame(bowData.toarray(), columns=vectorizer.get_feature_names_out())
+bowData = vectorizerBoW.fit_transform(reviews)                                     
+bowDataDF = pd.DataFrame(bowData.toarray(), columns=vectorizerBoW.get_feature_names_out())
 
-vectorizer = TfidfVectorizer(vocabulary=vocabularyList, min_df=1)
-model = vectorizer.fit_transform(vocabularyList)
-tfidfData = pd.DataFrame(model.toarray(), columns = vectorizer.get_feature_names_out())
+vectorizerTFIDF = TfidfVectorizer(vocabulary=vocabularyList, min_df=1)               #Nutzung von erzeugtem Vokabular + Vokabular muss in mindestens einem Dokument vorkommen
+tfidfData = vectorizerTFIDF.fit_transform(vocabularyList)
+tfidfDataDF = pd.DataFrame(tfidfData.toarray(), columns = vectorizerTFIDF.get_feature_names_out())
 
 
 print("BoW Data:")
-print(bowData)
-print("TF-IDF Data:")
-print(bowData)
+print(bowDataDF)
+print("\n" + "TF-IDF Data:")
+print(tfidfDataDF)
+
+
+
+
+
+corpusGensim = gensim.matutils.Sparse2Corpus(bowData, documents_columns=False)     #BoW von SciKit zu einem Corpus für Gensim
+dictionary = gensim.corpora.Dictionary.from_corpus(corpusGensim, id2word=dict((id, word) for word, id in vectorizerBoW.vocabulary_.items())) #Umwandlung zu einem dictionary für id2word
+
+amountOfTopics = 50                                                                 #Auswahl Menge von Themen
+
+lsaModel = LsiModel(corpus=corpusGensim, id2word=dictionary, num_topics=amountOfTopics)
+ldaModel = LdaModel(corpus=corpusGensim, id2word=dictionary, num_topics=amountOfTopics)
+
+print( "\n" + "LSA Output:")
+print(lsaModel.print_topics())
+
+print( "\n" + "LDA Output:")
+print(ldaModel.print_topics())
+
 input()
