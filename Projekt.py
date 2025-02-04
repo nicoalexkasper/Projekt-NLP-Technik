@@ -14,34 +14,32 @@ nltk.download('punkt_tab')
 nltk.download('stopwords')
 nltk.download('wordnet')
 
-def lowerElementsInList(list):                                                                                                                                          #Nimmt Liste und macht diese zu Lowercase
-    return [element.lower() for element in list]
+names = ["xfinity"]                                                                                                                                                         #Namen die nicht korregiert werden sollten; Hier nur Xfinity; Jedoch durch Array erweiterbar
 
-def correctSpellingMistakes(list):                                                                                                                                      #Verbessern der Rechtschreibfehler
+def correctSpellingMistakes(sentence):                                                                                                                                      #Verbessern der Rechtschreibfehler
     spell = Speller("en")
-    tempReview = []
-    for element in list:
-        word = spell(element)
-        tempReview.append(word)
-    return tempReview
+    words = sentence.split()
+    tempSentence = ""
+    for word in words:
+        if word == names:
+            tempSentence += spell(word) + " "
+        else:
+            tempSentence += word + " "
+    return tempSentence
 
-def completeContractions(list):                                                                                                                                         #Vervollständigung von Kontraktionen ("They're" -> "They are")
-    return[contractions.fix(element) for element in list]
+def completeContractions(sentence):                                                                                                                                         #Vervollständigung von Kontraktionen ("They're" -> "They are")
+    return contractions.fix(sentence)
 
-def removeSpecialChars(list):                                                                                                                                           #Entfernung von speziellen Zeichen ("e-mail" -> "email")
-    tempList = []
-    for element in list:
+def removeSpecialChars(sentence):                                                                                                                                           #Entfernung von speziellen Zeichen ("e-mail" -> "email")
         tempSentence = ""
-        for chars in element:
+        for chars in sentence:
             if chars.isalpha():
                 tempSentence += chars
             elif chars == "-":
                 break
             else:
                 tempSentence +=" "
-                
-        tempList.append(tempSentence)
-    return tempList
+        return tempSentence
 
 
 vocabularyList = []
@@ -49,13 +47,14 @@ tokenizedList = []
 
 reviewsdf = pd.read_csv("Comcast.csv")                                                                                                                                      #CSV Datei zu Dateframe
 reviews = reviewsdf["Customer Complaint"].tolist()                                                                                                                          #Filtern der Spalte Customer Complaint aus dem Dataframe, Ergebnis sind Reviews 
-reviews = lowerElementsInList(reviews)                                                                                                                                      #Aufruf von Methode lowerElementsInList
-reviews = correctSpellingMistakes(reviews)                                                                                                                                  #Aufruf von Methode correctSpellingMistakes
-reviews = completeContractions(reviews)                                                                                                                                     #Aufruf von Methode completeContractions
-reviews = removeSpecialChars(reviews)                                                                                                                                       #Aufruf von Methode removeSpecialChars
 
 
 for element in reviews:
+    element = element.lower()
+    element = correctSpellingMistakes(element)                                                                                                                             #Aufruf von Methode correctSpellingMistakes
+    element = completeContractions(element)                                                                                                                                #Aufruf von Methode completeContractions
+    element = removeSpecialChars(element)                                                                                                                                  #Aufruf von Methode removeSpecialChars
+
     lemmatizer =  nltk.stem.WordNetLemmatizer()
     tokens = nltk.tokenize.word_tokenize(element)                                                                                                                           #Tokenize von Review
     stopWords = set(stopwords.words('english'))                                                                                                                             #Nutzung Englische Stoppwörter
