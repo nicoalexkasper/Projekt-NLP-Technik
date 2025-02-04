@@ -21,10 +21,10 @@ def correctSpellingMistakes(sentence):                                          
     words = sentence.split()
     tempSentence = ""
     for word in words:
-        if word == names:
-            tempSentence += spell(word) + " "
-        else:
+        if word == names:                                                                                                                                                   #Falls wort in der names Liste, wird dies nicht korregiert
             tempSentence += word + " "
+        else:
+            tempSentence += spell(word) + " "
     return tempSentence
 
 def completeContractions(sentence):                                                                                                                                         #Vervollständigung von Kontraktionen ("They're" -> "They are")
@@ -47,13 +47,15 @@ tokenizedList = []
 
 reviewsdf = pd.read_csv("Comcast.csv")                                                                                                                                      #CSV Datei zu Dateframe
 reviews = reviewsdf["Customer Complaint"].tolist()                                                                                                                          #Filtern der Spalte Customer Complaint aus dem Dataframe, Ergebnis sind Reviews 
-
+tempReviews = []                                                                                                                                                            #Array um die bereinigten Reviews zu erhalten
 
 for element in reviews:
-    element = element.lower()
+    element = element.lower()                                                                                                                                              #Review zu kleinbuchstaben
     element = correctSpellingMistakes(element)                                                                                                                             #Aufruf von Methode correctSpellingMistakes
     element = completeContractions(element)                                                                                                                                #Aufruf von Methode completeContractions
     element = removeSpecialChars(element)                                                                                                                                  #Aufruf von Methode removeSpecialChars
+    
+    tempReviews.append(element)                                                                                                                                             
 
     lemmatizer =  nltk.stem.WordNetLemmatizer()
     tokens = nltk.tokenize.word_tokenize(element)                                                                                                                           #Tokenize von Review
@@ -61,10 +63,13 @@ for element in reviews:
     stopWords.remove("no")                                                                                                                                                  #Entfernung aus der Stoppwörter Liste no
     stopWords.remove("not")                                                                                                                                                 #Entfernung aus der Stoppwörter Liste not
     filteredSentence = [lemmatizer.lemmatize(word) for word in tokens if not word in stopWords]                                                                             #Entfernung von Stoppwörtern in der Review & lemmatisierung der Wörter
+
     for word in filteredSentence:
         tokenizedList.append(filteredSentence)                                                                                                                              #Tokenized Wörter werden zur Liste für Berechnung Coherence Score gespeichet
         if word not in vocabularyList:                                                                                                                                      #Sofern das Wort nicht in der Vokabel-Liste vorkommt, wird dies hinzugefügt
             vocabularyList.append(word)
+
+reviews = tempReviews                                                                                                                                                       
 
 
 vectorizerBoW = CountVectorizer(vocabulary=vocabularyList)                                                                                                                  #Nutzung von erzeugtem Vokabular
